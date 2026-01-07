@@ -50,6 +50,7 @@
     }
     button:hover { background: #c53030; }
     #username { width: 280px; }
+    .status { color: #ffcc00; margin: 15px 0; max-width: 500px; }
   </style>
 
   <script type="module">
@@ -72,38 +73,43 @@ const firebaseConfig = {
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    let map = null;           // map created only when first shown
+    let map = null;
     let markers = null;
 
     const mapContainer = document.getElementById('map');
     const intro = document.querySelector('.intro-screen');
     const usernameInput = document.getElementById('username');
     const shareBtn = document.getElementById('shareBtn');
+    const statusEl = document.getElementById('status');
+
+    function updateStatus(msg) {
+      statusEl.textContent = msg;
+      console.log("Status:", msg);
+    }
 
     function initMap() {
-      if (map) return; // already initialized
+      if (map) return;
 
       map = L.map('map', { center: [30, 0], zoom: 2 });
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
         maxZoom: 19
       }).addTo(map);
 
       markers = L.markerClusterGroup();
       map.addLayer(markers);
 
-      // Live updates
       const locationsRef = ref(db, 'public_locations');
       const recentQuery = query(locationsRef, limitToLast(500));
 
       onValue(recentQuery, (snapshot) => {
         markers.clearLayers();
         const data = snapshot.val();
+        console.log("Firebase data received:", data);
         if (!data) return;
 
         Object.values(data).forEach(point => {
           if (!point.lat || !point.lng) return;
-
           const marker = L.marker([point.lat, point.lng]);
           marker.bindPopup(`
             <b>${point.nickname || '???'}</b><br>
@@ -113,76 +119,121 @@ const firebaseConfig = {
           markers.addLayer(marker);
         });
 
-        // Auto-fit on first real data load
         if (markers.getLayers().length > 0 && !map._fitDone) {
           map.fitBounds(markers.getBounds(), { padding: [50, 50] });
           map._fitDone = true;
         }
       });
 
-      // Final resize fix after everything is ready
       setTimeout(() => map.invalidateSize({ pan: false }), 300);
     }
 
-    // Show map & initialize when user wants to share
-    shareBtn.addEventListener('click', () => {
+    async function requestLocationPermissionAndShare() {
       const nickname = usernameInput.value.trim();
-
       if (!nickname) {
-        alert("Please enter your username/nickname first!");
+        updateStatus("Please enter your username first!");
         usernameInput.focus();
         return;
       }
 
       const consent = confirm(
-        `⚠️  VERY IMPORTANT WARNING  ⚠️\n\n` +
-        `Hello ${nickname},\n\n` +
-        `Your EXACT location + username will be PUBLICLY VISIBLE to EVERYONE on the internet!\n` +
-        `This can reveal where you live, work, study or currently are.\n` +
-        `Anyone can see it forever (or until deleted).\n\n` +
-        `Do you REALLY want to proceed and show the map?`
+        `⚠️  VERY IMPORTANT  ⚠️\n\n` +
+        `Hello ${nickname},\n` +
+        `Your EXACT location + username will be PUBLIC on this map!\n` +
+        `Anyone can see it. This is high privacy risk!\n\n` +
+        `Continue only if you understand.`
       );
-
       if (!consent) return;
 
       // Hide intro, show map
       intro.classList.add('hidden');
       mapContainer.style.display = 'block';
-
-      // Initialize map only now (when visible!)
       initMap();
 
-      // Get & share location
-      if (!navigator.geolocation) {
-        alert("Geolocation not supported.");
+      // Step 1: Check current permission state
+      if (!navigator.permissions || !navigator.permissions.query) {
+        updateStatus("Your browser doesn't support permission checking. Trying to request location...");
+        getLocation();
         return;
       }
 
-      navigator.geolocation.getCurrentPosition(async (position) => {
-        const { latitude: lat, longitude: lng } = position.coords;
+      try {
+        const permissionStatus = await navigator.permissions.query({ name: "geolocation" });
+        console.log("Current geolocation permission state:", permissionStatus.state);
 
-        try {
-          await push(ref(db, 'public_locations'), {
+        if (permissionStatus.state === "denied") {
+          updateStatus(
+            "Location access is permanently blocked for this site.\n\n" +
+            "Fix: Click the lock icon next to the URL → Site settings → Location → set to 'Ask (default)' or 'Allow'\n" +
+            "Then refresh the page."
+          );
+          return;
+        }
+
+        if (permissionStatus.state === "granted") {
+          updateStatus("Location already allowed → getting position...");
+          getLocation();
+          return;
+        }
+
+        // state === "prompt" → normal case, prompt will show when we call getCurrentPosition
+        updateStatus("Requesting location permission... (browser prompt should appear now)");
+        getLocation();
+
+      } catch (err) {
+        console.error("Permission query error:", err);
+        updateStatus("Couldn't check permission state. Trying directly...");
+        getLocation();
+      }
+    }
+
+    function getLocation() {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude: lat, longitude: lng } = position.coords;
+          console.log("Location success:", lat, lng);
+          updateStatus(`Location acquired! Sharing as ${usernameInput.value.trim()}...`);
+
+          push(ref(db, 'public_locations'), {
             lat,
             lng,
-            nickname,
-            timestamp: Date.now(),
-            userAgent: navigator.userAgent.substring(0, 80)
+            nickname: usernameInput.value.trim(),
+            timestamp: Date.now()
+          }).then(() => {
+            alert(`Success! Your location is now on the map as ${usernameInput.value.trim()}`);
+          }).catch(err => {
+            console.error("Firebase push error:", err);
+            alert("Location got but failed to share: " + err.message);
           });
-
-          alert(`Location shared as ${nickname}! The map is now live.`);
-        } catch (error) {
-          console.error(error);
-          alert("Error sharing: " + error.message);
+        },
+        (error) => {
+          console.error("Geolocation error:", error);
+          let msg = "Location error: ";
+          switch(error.code) {
+            case 1: // PERMISSION_DENIED
+              msg += "Permission denied or blocked. Check browser/site settings → Location → reset to 'Ask'";
+              break;
+            case 2:
+              msg += "Position unavailable (no GPS/network?)";
+              break;
+            case 3:
+              msg += "Request timed out – try again";
+              break;
+            default:
+              msg += error.message;
+          }
+          updateStatus(msg);
+          alert(msg);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,      // 15 seconds – give user time
+          maximumAge: 0
         }
-      }, (err) => {
-        alert("Couldn't get location: " + err.message);
-      }, {
-        enableHighAccuracy: true,
-        timeout: 8000,
-        maximumAge: 0
-      });
-    });
+      );
+    }
+
+    shareBtn.addEventListener('click', requestLocationPermissionAndShare);
   </script>
 </head>
 <body>
@@ -190,12 +241,13 @@ const firebaseConfig = {
   <div class="intro-screen">
     <h1>Public Location Wall</h1>
     <p style="max-width: 600px; margin: 20px auto;">
-      This is a public map where <strong>everyone</strong> can see shared locations.<br>
-      <strong>Very high privacy risk!</strong> Only continue if you understand the consequences.
+      <strong>Warning:</strong> This map shows real user locations publicly.<br>
+      High privacy risk – only continue if you accept that.
     </p>
 
     <input type="text" id="username" placeholder="Enter your username/nickname" required>
-    <button id="shareBtn">I understand — Show map & share my location</button>
+    <button id="shareBtn">Show map & share my location</button>
+    <div id="status" class="status"></div>
   </div>
 
   <div id="map"></div>
