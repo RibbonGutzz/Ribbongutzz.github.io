@@ -3,95 +3,163 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Public Location Wall - Demo</title>
+  <title>Public Location Wall</title>
   
   <!-- Leaflet -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   
-  <!-- Firebase v10+ modular (2025 style) -->
+  <style>
+    body { 
+      margin:0; 
+      font-family: system-ui, sans-serif; 
+      background:#111; 
+      color:#eee; 
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    #map { 
+      flex: 1;
+      display: none;           /* hidden at first */
+    }
+    .intro-screen {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      text-align: center;
+      background: rgba(0,0,0,0.8);
+    }
+    .intro-screen.hidden {
+      display: none;
+    }
+    input, button {
+      margin: 12px;
+      padding: 12px 20px;
+      font-size: 1.1em;
+      border-radius: 6px;
+      border: none;
+    }
+    button {
+      background: #e53e3e;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover { background: #c53030; }
+    #username { width: 280px; }
+  </style>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
     import { getDatabase, ref, push, onValue, query, limitToLast } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
 
     // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyCX6FmX8qpqMGYF4rN04Z_xXqhXEcw9xJQ",
-  authDomain: "mapv-8e741.firebaseapp.com",
-  databaseURL: "https://mapv-8e741-default-rtdb.firebaseio.com",
-  projectId: "mapv-8e741",
-  storageBucket: "mapv-8e741.firebasestorage.app",
-  messagingSenderId: "822625088340",
-  appId: "1:822625088340:web:b95195bfdd3446b9440ec1",
-  measurementId: "G-L15454FWTL"
+  apiKey: "AIzaSyC5LJ34tIqk83QLSrNqaDgHY_BGD5hoBuk",
+  authDomain: "mapmap-1d259.firebaseapp.com",
+  databaseURL: "https://mapmap-1d259-default-rtdb.firebaseio.com",
+  projectId: "mapmap-1d259",
+  storageBucket: "mapmap-1d259.firebasestorage.app",
+  messagingSenderId: "255184564192",
+  appId: "1:255184564192:web:1b26b87dbe29a67f1f4585",
+  measurementId: "G-L190BWDBFC"
 };
-    // =========================================================
+    // ======================================================
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    const map = L.map('map').setView([30, 0], 2);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-      maxZoom: 19
-    }).addTo(map);
+    let map = null;           // map created only when first shown
+    let markers = null;
 
-    // Markers cluster (optional but recommended)
-    const markers = L.markerClusterGroup();
-    map.addLayer(markers);
+    const mapContainer = document.getElementById('map');
+    const intro = document.querySelector('.intro-screen');
+    const usernameInput = document.getElementById('username');
+    const shareBtn = document.getElementById('shareBtn');
 
-    // Live updates
-    const locationsRef = ref(db, 'public_locations');
-    const recentQuery = query(locationsRef, limitToLast(500)); // last 500 points max
+    function initMap() {
+      if (map) return; // already initialized
 
-    onValue(recentQuery, (snapshot) => {
-      markers.clearLayers();
-      
-      const data = snapshot.val();
-      if (!data) return;
+      map = L.map('map', { center: [30, 0], zoom: 2 });
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom: 19
+      }).addTo(map);
 
-      Object.values(data).forEach(point => {
-        if (!point.lat || !point.lng) return;
+      markers = L.markerClusterGroup();
+      map.addLayer(markers);
 
-        const marker = L.marker([point.lat, point.lng], {
-          title: point.nickname || 'Anonymous'
+      // Live updates
+      const locationsRef = ref(db, 'public_locations');
+      const recentQuery = query(locationsRef, limitToLast(500));
+
+      onValue(recentQuery, (snapshot) => {
+        markers.clearLayers();
+        const data = snapshot.val();
+        if (!data) return;
+
+        Object.values(data).forEach(point => {
+          if (!point.lat || !point.lng) return;
+
+          const marker = L.marker([point.lat, point.lng]);
+          marker.bindPopup(`
+            <b>${point.nickname || '???'}</b><br>
+            ${new Date(point.timestamp).toLocaleString()}<br>
+            <small>${point.lat.toFixed(5)}, ${point.lng.toFixed(5)}</small>
+          `);
+          markers.addLayer(marker);
         });
 
-        marker.bindPopup(`
-          <b>${point.nickname || 'Anonymous'}</b><br>
-          ${new Date(point.timestamp).toLocaleString()}<br>
-          <small>${point.lat.toFixed(5)}, ${point.lng.toFixed(5)}</small>
-        `);
-
-        markers.addLayer(marker);
+        // Auto-fit on first real data load
+        if (markers.getLayers().length > 0 && !map._fitDone) {
+          map.fitBounds(markers.getBounds(), { padding: [50, 50] });
+          map._fitDone = true;
+        }
       });
 
-      // Auto-fit if first load
-      if (markers.getLayers().length > 0 && !map.hasEventListener('moveend')) {
-        map.fitBounds(markers.getBounds(), { padding: [50, 50] });
-      }
-    });
+      // Final resize fix after everything is ready
+      setTimeout(() => map.invalidateSize({ pan: false }), 300);
+    }
 
-    // Share location
-    document.getElementById('shareBtn').addEventListener('click', async () => {
+    // Show map & initialize when user wants to share
+    shareBtn.addEventListener('click', () => {
+      const nickname = usernameInput.value.trim();
+
+      if (!nickname) {
+        alert("Please enter your username/nickname first!");
+        usernameInput.focus();
+        return;
+      }
+
       const consent = confirm(
-        "⚠️ WARNING ⚠️\n\n" +
-        "Your EXACT location will be PUBLICLY VISIBLE to EVERYONE!\n" +
-        "This can reveal where you live/work/study.\n\n" +
-        "Really continue?"
+        `⚠️  VERY IMPORTANT WARNING  ⚠️\n\n` +
+        `Hello ${nickname},\n\n` +
+        `Your EXACT location + username will be PUBLICLY VISIBLE to EVERYONE on the internet!\n` +
+        `This can reveal where you live, work, study or currently are.\n` +
+        `Anyone can see it forever (or until deleted).\n\n` +
+        `Do you REALLY want to proceed and show the map?`
       );
 
       if (!consent) return;
 
+      // Hide intro, show map
+      intro.classList.add('hidden');
+      mapContainer.style.display = 'block';
+
+      // Initialize map only now (when visible!)
+      initMap();
+
+      // Get & share location
       if (!navigator.geolocation) {
-        alert("Geolocation is not supported by your browser.");
+        alert("Geolocation not supported.");
         return;
       }
 
       navigator.geolocation.getCurrentPosition(async (position) => {
         const { latitude: lat, longitude: lng } = position.coords;
-
-        const nickname = prompt("Nickname (optional):") || "Anonymous";
 
         try {
           await push(ref(db, 'public_locations'), {
@@ -99,16 +167,16 @@ const firebaseConfig = {
             lng,
             nickname,
             timestamp: Date.now(),
-            userAgent: navigator.userAgent.substring(0, 80) // optional
+            userAgent: navigator.userAgent.substring(0, 80)
           });
 
-          alert("Location shared! Thank you.");
+          alert(`Location shared as ${nickname}! The map is now live.`);
         } catch (error) {
           console.error(error);
-          alert("Error sharing location: " + error.message);
+          alert("Error sharing: " + error.message);
         }
-      }, (error) => {
-        alert("Couldn't get location: " + error.message);
+      }, (err) => {
+        alert("Couldn't get location: " + err.message);
       }, {
         enableHighAccuracy: true,
         timeout: 8000,
@@ -116,37 +184,21 @@ const firebaseConfig = {
       });
     });
   </script>
-
-  <style>
-    body { margin:0; font-family: system-ui, sans-serif; background:#111; color:#eee; }
-    #map { height: 85vh; }
-    .controls {
-      position: absolute;
-      top: 10px;
-      left: 50px;
-      z-index: 1000;
-      background: rgba(0,0,0,0.7);
-      padding: 12px 18px;
-      border-radius: 8px;
-      backdrop-filter: blur(4px);
-    }
-    button {
-      padding: 10px 18px;
-      font-size: 1.1em;
-      background: #e53e3e;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    button:hover { background: #c53030; }
-  </style>
 </head>
 <body>
+
+  <div class="intro-screen">
+    <h1>Public Location Wall</h1>
+    <p style="max-width: 600px; margin: 20px auto;">
+      This is a public map where <strong>everyone</strong> can see shared locations.<br>
+      <strong>Very high privacy risk!</strong> Only continue if you understand the consequences.
+    </p>
+
+    <input type="text" id="username" placeholder="Enter your username/nickname" required>
+    <button id="shareBtn">I understand — Show map & share my location</button>
+  </div>
+
   <div id="map"></div>
 
-  <div class="controls">
-    <button id="shareBtn">Share My Location (Public!)</button>
-  </div>
 </body>
 </html>
